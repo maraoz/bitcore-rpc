@@ -1,6 +1,6 @@
 {
   "name": "bitcore-rpc",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "An interface to the bitcoind RPC API for bitcore",
   "author": "BitPay <dev@bitpay.com>",
   "main": "index.js",
@@ -8,8 +8,7 @@
     "lint": "gulp lint",
     "test": "gulp test",
     "coverage": "gulp coverage",
-    "build": "gulp",
-    "postinstall": "node ./lib/errors/build.js"
+    "build": "gulp"
   },
   "contributors": [
     {
