@@ -3,7 +3,7 @@ bitcore-rpc
 
 [![NPM Package](https://img.shields.io/npm/v/bitcore-rpc.svg?style=flat-square)](https://www.npmjs.org/package/bitcore-rpc)
 [![Build Status](https://img.shields.io/travis/bitpay/bitcore-rpc.svg?branch=master&style=flat-square)](https://travis-ci.org/bitpay/bitcore-rpc)
-[![Coverage Status](https://img.shields.io/coveralls/bitpay/bitcore-rpc.svg?style=flat-square)](https://coveralls.io/r/bitpay/bitcore-rpc)
+[![Coverage Status](https://img.shields.io/coveralls/bitpay/bitcore-rpc.svg)](https://coveralls.io/r/bitpay/bitcore-rpc)
 
 bitcore-rpc adds support to connect to bitcoind's RPC interface
 
