@@ -21,6 +21,7 @@
  * <li> `browser:compressed` - build `bitcore-rpc.min.js`
  * <li> `browser:maketests` - build `tests.js`, needed for testing without karma
  * </ul>`
+ * <li> `errors` - autogenerate the `./lib/errors/index.js` file with error definitions
  * <li> `lint` - run `jshint`
  * <li> `coverage` - run `istanbul` with mocha to generate a report of test coverage
  * <li> `coveralls` - updates coveralls info
@@ -30,22 +31,19 @@
 'use strict';
 
 var gulp = require('gulp');
+
 var coveralls = require('gulp-coveralls');
+var gutil = require('gulp-util');
 var jshint = require('gulp-jshint');
 var mocha = require('gulp-mocha');
+var rename = require('gulp-rename');
 var runSequence = require('run-sequence');
 var shell = require('gulp-shell');
-var gutil = require('gulp-util');
 var uglify = require('gulp-uglify');
-var rename = require('gulp-rename');
-var bump = require('gulp-bump');
-var git = require('gulp-git');
-
 
 var files = ['lib/**/*.js'];
 var tests = ['test/**/*.js'];
 var alljs = files.concat(tests);
-
 
 function ignoreError() {
   /* jshint ignore:start */ // using `this` in this context is weird 
@@ -67,9 +65,9 @@ var testKarma = shell.task([
  * Testing
  */
 
-gulp.task('test:node', testMocha);
+gulp.task('test:node', ['errors'], testMocha);
 
-gulp.task('test:node:nofail', function() {
+gulp.task('test:node:nofail', ['errors'], function() {
   return testMocha().on('error', ignoreError);
 });
 
@@ -83,7 +81,7 @@ gulp.task('test', function(callback) {
  * File generation
  */
 
-gulp.task('browser:uncompressed', shell.task([
+gulp.task('browser:uncompressed', ['errors'], shell.task([
   './node_modules/.bin/browserify index.js --insert-global-vars=true --standalone=bitcore-rpc -o bitcore-rpc.js'
 ]));
 
@@ -105,6 +103,10 @@ gulp.task('browser:maketests', shell.task([
 gulp.task('browser', function(callback) {
   runSequence(['browser:compressed'], ['browser:maketests'], callback);
 });
+
+gulp.task('errors', shell.task([
+  'node ./lib/errors/build.js'
+]));
 
 
 /**
@@ -169,126 +171,9 @@ gulp.task('watch:browser', function() {
   return gulp.watch(alljs, ['browser']);
 });
 
-/**
- * Release automation
- */
-
-gulp.task('release:install', function() {
-  return shell.task([
-    'npm install',
-  ]);
-});
-
-gulp.task('release:bump', function() {
-  return gulp.src(['./bower.json', './package.json'])
-    .pipe(bump({
-      type: 'patch'
-    }))
-    .pipe(gulp.dest('./'));
-});
-
-gulp.task('release:checkout-releases', function(cb) {
-  git.checkout('releases', {
-    args: ''
-  }, cb);
-});
-
-gulp.task('release:merge-master', function(cb) {
-  git.merge('master', {
-    args: ''
-  }, cb);
-});
-
-gulp.task('release:checkout-master', function(cb) {
-  git.checkout('master', {
-    args: ''
-  }, cb);
-});
-
-gulp.task('release:add-built-files', function() {
-  return gulp.src(['./bitcore-rpc.js', './bitcore-rpc.min.js', './package.json', './bower.json'])
-    .pipe(git.add({
-      args: '-f'
-    }));
-});
-
-gulp.task('release:build-commit', ['release:add-built-files'], function() {
-  var pjson = require('./package.json');
-  return gulp.src(['./bitcore-rpc.js', './bitcore-rpc.min.js', './package.json', './bower.json'])
-    .pipe(git.commit('Build: ' + pjson.version, {
-      args: ''
-    }));
-});
-
-gulp.task('release:version-commit', function() {
-  var pjson = require('./package.json');
-  var files = ['./package.json', './bower.json'];
-  return gulp.src(files)
-    .pipe(git.commit('Bump package version to ' + pjson.version, {
-      args: ''
-    }));
-});
-
-gulp.task('release:push-releases', function(cb) {
-  git.push('bitpay', 'releases', {
-    args: ''
-  }, cb);
-});
-
-gulp.task('release:push', function(cb) {
-  git.push('bitpay', 'master', {
-    args: ''
-  }, cb);
-});
-
-gulp.task('release:push-tag', function(cb) {
-  var pjson = require('./package.json');
-  var name = 'v' + pjson.version;
-  git.tag(name, 'Release ' + name, function() {
-    git.push('bitpay', name, cb);
-  });
-});
-
-gulp.task('release:publish', shell.task([
-  'npm publish'
-]));
-
-gulp.task('release', function(cb) {
-  runSequence(
-    // Checkout the `releases` branch
-    ['release:checkout-releases'],
-    // Merge the master branch
-    ['release:merge-master'],
-    // Run npm install
-    ['release:install'],
-    // Build browser bundle
-    ['browser:compressed'],
-    // Run tests with gulp test
-    ['test'],
-    // Update package.json and bower.json
-    ['release:bump'],
-    // Commit 
-    ['release:build-commit'],
-    // Run git push bitpay $VERSION
-    ['release:push-tag'],
-    // Push to releases branch
-    ['release:push-releases'],
-    // Run npm publish
-    ['release:publish'],
-    // Checkout the `master` branch
-    ['release:checkout-master'],
-    // Bump package.json and bower.json, again
-    ['release:bump'],
-    // Version commit with no binary files to master
-    ['release:version-commit'],
-    // Push to master
-    ['release:push'],
-    cb);
-});
-
-
 /* Default task */
 gulp.task('default', function(callback) {
   return runSequence(['lint'], ['browser:uncompressed', 'test'], ['coverage', 'browser:compressed'],
     callback);
 });
+
