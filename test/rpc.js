@@ -3,6 +3,7 @@
 var chai = require('chai');
 var should = chai.should();
 
+var bitcore = require('bitcore');
 var RPC = require('../');
 
 describe('RPC', function() {
