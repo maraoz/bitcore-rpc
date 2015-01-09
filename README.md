@@ -1,4 +1,4 @@
-bitcoind JSON-RPC interface for bitcore
+bitcoind JSON-RPC for bitcore
 =======
 
 [![NPM Package](https://img.shields.io/npm/v/bitcore-rpc.svg?style=flat-square)](https://www.npmjs.org/package/bitcore-rpc)
